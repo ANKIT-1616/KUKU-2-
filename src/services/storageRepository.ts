@@ -39,6 +39,7 @@ const STORAGE_KEYS = {
   PLAN_DAYS: 'ailet2027_plan_days',
   MOCK_ATTEMPTS: 'ailet2027_mock_attempts',
   ACTIVE_TEST: 'ailet2027_active_test',
+  ACTIVE_TEST_QUESTIONS: 'ailet2027_active_test_questions',
   ERROR_ENTRIES: 'ailet2027_error_entries',
   SPACED_REVISION: 'ailet2027_spaced_revision',
   CURRENT_AFFAIRS: 'ailet2027_current_affairs',
@@ -116,6 +117,30 @@ export class StorageRepository {
     }
   }
 
+static getActiveTestQuestions(): QuestionItem[] {
+    try {
+      const val = localStorage.getItem(STORAGE_KEYS.ACTIVE_TEST_QUESTIONS);
+      return val ? JSON.parse(val) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  static saveActiveTestQuestions(questions: QuestionItem[]): void {
+    try {
+      if (!questions || questions.length === 0) {
+        localStorage.removeItem(STORAGE_KEYS.ACTIVE_TEST_QUESTIONS);
+        return;
+      }
+
+      localStorage.setItem(
+        STORAGE_KEYS.ACTIVE_TEST_QUESTIONS,
+        JSON.stringify(questions)
+      );
+    } catch {
+      // Ignore storage errors
+    }
+  }
   static getErrorEntries(): ErrorNotebookEntry[] {
     try {
       const val = localStorage.getItem(STORAGE_KEYS.ERROR_ENTRIES);

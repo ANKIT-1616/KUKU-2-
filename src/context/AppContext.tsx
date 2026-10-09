@@ -65,7 +65,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [planDays, setPlanDaysState] = useState<PlanDay[]>(() => StorageRepository.getPlanDays());
   const [mockAttempts, setMockAttemptsState] = useState<MockAttemptResult[]>(() => StorageRepository.getMockAttempts());
   const [activeTest, setActiveTestState] = useState<ActiveTestState | null>(() => StorageRepository.getActiveTest());
-  const [activeTestQuestions, setActiveTestQuestions] = useState<QuestionItem[]>([]);
+const [activeTestQuestions, setActiveTestQuestions] = useState<QuestionItem[]>(
+  () => StorageRepository.getActiveTestQuestions()
+);
   const [errorEntries, setErrorEntriesState] = useState<ErrorNotebookEntry[]>(() => StorageRepository.getErrorEntries());
   const [spacedRevisionItems, setSpacedRevisionItemsState] = useState<SpacedRevisionItem[]>(() =>
     StorageRepository.getSpacedRevisionItems()
@@ -78,17 +80,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [rebalanceLogs, setRebalanceLogsState] = useState<RebalanceLog[]>(() => StorageRepository.getRebalanceLogs());
   const [activeTab, setActiveTab] = useState<string>('home');
   const [activeAttemptResultForModal, setActiveAttemptResultForModal] = useState<MockAttemptResult | null>(null);
-
-  // Restore active test questions on reload if active test exists
+  // Restore active test questions on reload
   useEffect(() => {
-    if (activeTest && activeTestQuestions.length === 0) {
-      const qIds = Object.keys(activeTest.answers);
-      const matched = questions.filter((q) => qIds.includes(q.id));
-      if (matched.length > 0) {
-        setActiveTestQuestions(matched);
+    if (!activeTest) {
+      setActiveTestQuestions([]);
+      StorageRepository.saveActiveTestQuestions([]);
+      return;
+    }
+
+    if (activeTestQuestions.length === 0) {
+      const savedQuestions = StorageRepository.getActiveTestQuestions();
+
+      if (savedQuestions.length > 0) {
+        setActiveTestQuestions(savedQuestions);
       }
     }
-  }, [activeTest, questions, activeTestQuestions.length]);
+  }, [activeTest, activeTestQuestions.length]);
 
   // Compute effective date
   const currentDate = useMemo(() => {
@@ -189,6 +196,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setActiveTestState(newActiveState);
     setActiveTestQuestions(testQuestions);
     StorageRepository.saveActiveTest(newActiveState);
+    StorageRepository.saveActiveTestQuestions(testQuestions);
   }, []);
 
   // Update answer in active test
