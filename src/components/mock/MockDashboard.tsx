@@ -126,28 +126,22 @@ export const MockDashboard: React.FC = () => {
       return;
     }
 
-    // Duplicate or slice pool to create mock test instance
-    let testQuestions = [...pool];
-    if (testQuestions.length < testConfig.totalQuestions) {
-      // For demonstration of UI when small sample bank is seeded: repeat items with unique IDs
-      const expanded: typeof questions = [];
-      let counter = 0;
-      while (expanded.length < testConfig.totalQuestions && expanded.length < 150) {
-        const item = pool[counter % pool.length];
-        expanded.push({
-          ...item,
-          id: `${item.id}_rep_${expanded.length}`,
-        });
-        counter++;
-      }
-      testQuestions = expanded;
-    } else {
-      testQuestions = testQuestions.slice(0, testConfig.totalQuestions);
+    // Never repeat questions to fill a test.
+    const uniqueQuestions = Array.from(
+      new Map(pool.map((question) => [question.id, question])).values()
+    );
+
+    if (uniqueQuestions.length < testConfig.totalQuestions) {
+      alert(
+        `This test requires ${testConfig.totalQuestions} unique questions, but only ${uniqueQuestions.length} are available. The question bank must be expanded before this test can run.`
+      );
+      return;
     }
 
-    startTest(testConfig, testQuestions);
-  };
+    const testQuestions = uniqueQuestions.slice(0, testConfig.totalQuestions);
 
+    startTest(testConfig, testQuestions);
+};
   return (
     <div className="space-y-8">
       {/* Overview Banner */}

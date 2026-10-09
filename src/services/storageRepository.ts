@@ -184,16 +184,46 @@ static getActiveTestQuestions(): QuestionItem[] {
     localStorage.setItem(STORAGE_KEYS.CURRENT_AFFAIRS, JSON.stringify(items));
   }
 
-  static getQuestions(): QuestionItem[] {
-    try {
-      const val = localStorage.getItem(STORAGE_KEYS.QUESTIONS);
-      if (val) return JSON.parse(val);
+static getQuestions(): QuestionItem[] {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.QUESTIONS);
+
+    if (!val) {
       StorageRepository.saveQuestions(SEED_QUESTIONS);
       return SEED_QUESTIONS;
-    } catch {
+    }
+
+    const savedQuestions: QuestionItem[] = JSON.parse(val);
+
+    if (!Array.isArray(savedQuestions)) {
+      StorageRepository.saveQuestions(SEED_QUESTIONS);
       return SEED_QUESTIONS;
     }
+
+    // Add newly published questions without removing saved questions.
+    const questionsById = new Map<string, QuestionItem>();
+
+    for (const question of savedQuestions) {
+      questionsById.set(question.id, question);
+    }
+
+    for (const question of SEED_QUESTIONS) {
+      if (!questionsById.has(question.id)) {
+        questionsById.set(question.id, question);
+      }
+    }
+
+    const mergedQuestions = Array.from(questionsById.values());
+
+    if (mergedQuestions.length !== savedQuestions.length) {
+      StorageRepository.saveQuestions(mergedQuestions);
+    }
+
+    return mergedQuestions;
+  } catch {
+    return SEED_QUESTIONS;
   }
+}
 
   static saveQuestions(questions: QuestionItem[]): void {
     localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(questions));
